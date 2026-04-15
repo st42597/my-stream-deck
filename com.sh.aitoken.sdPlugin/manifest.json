@@ -1,0 +1,91 @@
+{
+  "Author": "sh",
+  "Description": "Shows token usage for Claude Code and Codex, CPU/RAM stats, and Slack notifications",
+  "Name": "AI Token Monitor",
+  "Version": "1.2.0",
+  "SDKVersion": 2,
+  "Nodejs": {
+    "Version": "20",
+    "Debug": "enabled"
+  },
+  "Software": {
+    "MinimumVersion": "6.0"
+  },
+  "OS": [
+    {
+      "Platform": "mac",
+      "MinimumVersion": "11"
+    }
+  ],
+  "Category": "AI Tools",
+  "CategoryIcon": "imgs/plugin/category-icon",
+  "CodePath": "bin/plugin.js",
+  "Icon": "imgs/plugin/icon",
+  "Actions": [
+    {
+      "Name": "Claude Code Tokens",
+      "UUID": "com.sh.aitoken.claude",
+      "Icon": "imgs/actions/claude/icon",
+      "Tooltip": "Shows Claude Code token usage (5h rolling window)",
+      "SupportedInMultiActions": false,
+      "States": [
+        {
+          "Image": "imgs/actions/claude/icon"
+        }
+      ],
+      "PropertyInspectorPath": "inspector/claude.html"
+    },
+    {
+      "Name": "Codex Tokens",
+      "UUID": "com.sh.aitoken.codex",
+      "Icon": "imgs/actions/codex/icon",
+      "Tooltip": "Shows OpenAI Codex token usage (5h rolling window)",
+      "SupportedInMultiActions": false,
+      "States": [
+        {
+          "Image": "imgs/actions/codex/icon"
+        }
+      ],
+      "PropertyInspectorPath": "inspector/codex.html"
+    },
+    {
+      "Name": "CPU Usage",
+      "UUID": "com.sh.aitoken.cpu",
+      "Icon": "imgs/actions/cpu/icon",
+      "Tooltip": "Shows CPU usage with area chart (Apple Silicon)",
+      "SupportedInMultiActions": false,
+      "States": [
+        {
+          "Image": "imgs/actions/cpu/icon"
+        }
+      ],
+      "PropertyInspectorPath": "inspector/system.html"
+    },
+    {
+      "Name": "RAM Usage",
+      "UUID": "com.sh.aitoken.ram",
+      "Icon": "imgs/actions/ram/icon",
+      "Tooltip": "Shows RAM usage with area chart (Apple Silicon)",
+      "SupportedInMultiActions": false,
+      "States": [
+        {
+          "Image": "imgs/actions/ram/icon"
+        }
+      ],
+      "PropertyInspectorPath": "inspector/system.html"
+    },
+    {
+      "Name": "Slack Notifications",
+      "UUID": "com.sh.aitoken.slack",
+      "Icon": "imgs/actions/slack/icon",
+      "Tooltip": "Shows Slack mention/DM count. Press to open newest unread.",
+      "SupportedInMultiActions": false,
+      "States": [
+        {
+          "Image": "imgs/actions/slack/icon"
+        }
+      ],
+      "PropertyInspectorPath": "inspector/slack.html"
+    }
+  ]
+}

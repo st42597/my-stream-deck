@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 144 144">
+  <rect width="144" height="144" rx="18" fill="#1a1a2e"/>
+  <text x="72" y="45" font-family="Arial" font-size="20" font-weight="bold" fill="#cc785c" text-anchor="middle">CLAUDE</text>
+  <!-- progress bar background -->
+  <rect x="16" y="60" width="112" height="14" rx="7" fill="#2d2d4e"/>
+  <!-- progress bar fill (placeholder, real value drawn via canvas) -->
+  <rect x="16" y="60" width="67" height="14" rx="7" fill="#cc785c"/>
+  <text x="72" y="100" font-family="Arial" font-size="16" fill="#a8b2d8" text-anchor="middle">0%</text>
+  <text x="72" y="122" font-family="Arial" font-size="12" fill="#666" text-anchor="middle">5h window</text>
+</svg>

@@ -1,0 +1,6 @@
+node_modules/
+com.sh.aitoken.sdPlugin/bin/
+logs/
+.claude/
+*.local
+.DS_Store

@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 144 144">
+  <rect width="144" height="144" fill="#0a0a0a"/>
+  <text x="72" y="55" font-family="'SF Mono', Menlo, monospace" font-size="22" font-weight="700" fill="#ff9500" text-anchor="middle" letter-spacing="1">RAM</text>
+  <!-- mini chart lines as decoration -->
+  <polyline points="16,105 36,95 56,100 76,80 96,88 116,75 128,80" fill="none" stroke="#ff9500" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.8"/>
+  <polygon points="16,105 36,95 56,100 76,80 96,88 116,75 128,80 128,110 16,110" fill="#ff9500" fill-opacity="0.12"/>
+  <text x="72" y="130" font-family="'SF Mono', Menlo, monospace" font-size="11" fill="#ff9500" fill-opacity="0.4" text-anchor="middle">MONITOR</text>
+</svg>

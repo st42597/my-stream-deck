@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>System Monitor Settings</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'SF Mono', 'Menlo', monospace;
+      font-size: 12px;
+      color: #ccc;
+      background: #0f0f0f;
+      padding: 14px;
+    }
+    .title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #00ff88;
+      margin-bottom: 14px;
+      letter-spacing: 1px;
+    }
+    .title.ram { color: #ff9500; }
+    label {
+      display: block;
+      color: #666;
+      font-size: 11px;
+      margin-bottom: 6px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+    .btn-group {
+      display: flex;
+      gap: 6px;
+    }
+    .btn-group button {
+      flex: 1;
+      padding: 8px 0;
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 5px;
+      color: #888;
+      font-family: 'SF Mono', 'Menlo', monospace;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-group button:hover {
+      border-color: #555;
+      color: #ccc;
+    }
+    .btn-group button.active {
+      background: #001a0d;
+      border-color: #00ff88;
+      color: #00ff88;
+    }
+    .btn-group.ram button.active {
+      background: #1a0e00;
+      border-color: #ff9500;
+      color: #ff9500;
+    }
+    .hint {
+      margin-top: 10px;
+      color: #444;
+      font-size: 10px;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+  <div class="title" id="titleEl">SYSTEM MONITOR</div>
+
+  <label>Chart Window</label>
+  <div class="btn-group" id="windowGroup">
+    <button data-value="30s">30s</button>
+    <button data-value="1m" class="active">1m</button>
+    <button data-value="2m">2m</button>
+  </div>
+  <div class="hint">Samples every 5 seconds.<br>Updates automatically.</div>
+
+  <script>
+    let ws;
+    let uuid;
+    let settings = { window: "1m" };
+    let isCpu = true;
+
+    const connectElgatoStreamDeckSocket = (inPort, inPropertyInspectorUUID, inRegisterEvent, inInfo, inActionInfo) => {
+      uuid = inPropertyInspectorUUID;
+
+      // Detect CPU vs RAM from action UUID
+      try {
+        const info = JSON.parse(inActionInfo);
+        isCpu = info.action.includes(".cpu");
+        if (!isCpu) {
+          document.getElementById("titleEl").classList.add("ram");
+          document.getElementById("titleEl").textContent = "RAM MONITOR";
+          document.getElementById("windowGroup").classList.add("ram");
+        }
+      } catch {}
+
+      ws = new WebSocket(`ws://127.0.0.1:${inPort}`);
+
+      ws.onopen = () => {
+        ws.send(JSON.stringify({ event: inRegisterEvent, uuid }));
+        ws.send(JSON.stringify({ event: "getSettings", context: uuid }));
+      };
+
+      ws.onmessage = (evt) => {
+        const data = JSON.parse(evt.data);
+        if (data.event === "didReceiveSettings") {
+          settings = { ...settings, ...data.payload.settings };
+          updateUI();
+        }
+      };
+    };
+
+    function updateUI() {
+      const buttons = document.querySelectorAll("#windowGroup button");
+      buttons.forEach((btn) => {
+        btn.classList.toggle("active", btn.dataset.value === settings.window);
+      });
+    }
+
+    function saveSettings() {
+      if (!ws || ws.readyState !== WebSocket.OPEN) return;
+      ws.send(JSON.stringify({ event: "setSettings", context: uuid, payload: settings }));
+    }
+
+    document.querySelectorAll("#windowGroup button").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        settings.window = btn.dataset.value;
+        updateUI();
+        saveSettings();
+      });
+    });
+  </script>
+</body>
+</html>
