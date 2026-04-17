@@ -20,11 +20,16 @@ interface SlackSettings {
   [key: string]: JsonValue;
 }
 
-const JUMP_NEXT_UNREAD_SCRIPT = `
+// Opens Slack's Activity view (⌘⇧M → 이동 > 내 활동) then jumps to the next
+// unread channel/DM (⌥⇧↓). Uses raw key codes because Electron apps handle
+// them more reliably than AppleScript `keystroke`.
+const OPEN_LATEST_ACTIVITY_SCRIPT = `
 tell application "Slack" to activate
-delay 0.25
+delay 0.3
 tell application "System Events"
   tell process "Slack"
+    key code 46 using {command down, shift down}
+    delay 0.15
     key code 125 using {option down, shift down}
   end tell
 end tell
@@ -53,7 +58,7 @@ export class SlackAction extends SingletonAction<SlackSettings> {
   }
 
   override onKeyDown(_ev: KeyDownEvent<SlackSettings>): void {
-    execFile("osascript", ["-e", JUMP_NEXT_UNREAD_SCRIPT], () => {});
+    execFile("osascript", ["-e", OPEN_LATEST_ACTIVITY_SCRIPT], () => {});
   }
 
   private updateDisplay(): void {

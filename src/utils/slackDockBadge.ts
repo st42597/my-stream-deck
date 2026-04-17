@@ -1,20 +1,15 @@
 import { execFile } from "child_process";
 
-const POLL_INTERVAL_MS = 3_000;
+const POLL_INTERVAL_MS = 10_000;
 const OSASCRIPT_TIMEOUT_MS = 3_000;
 
 const READ_BADGE_SCRIPT = `
 tell application "System Events"
   tell process "Dock"
     try
-      set slackItem to first UI element of list 1 whose name is "Slack"
-      try
-        set badge to value of attribute "AXStatusLabel" of slackItem
-        if badge is missing value then return ""
-        return badge
-      on error
-        return ""
-      end try
+      set badge to value of attribute "AXStatusLabel" of (UI element "Slack" of list 1)
+      if badge is missing value then return ""
+      return badge
     on error
       return "NOT_RUNNING"
     end try
