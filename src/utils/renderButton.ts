@@ -30,8 +30,8 @@ export function renderButtonSvg(opts: ButtonOptions): string {
   const pctY = Math.round(H / 2 + pctFontSize * 0.36);
 
   const resetBlock = resetsIn
-    ? `<rect x="0" y="${H - 30}" width="${W}" height="30" fill="#0a0a0a" fill-opacity="0.75"/>
-  <text x="72" y="${H - 10}" font-family="'SF Mono','Menlo',monospace" font-size="15" font-weight="600" fill="${color}" text-anchor="middle">↺ ${resetsIn}</text>`
+    ? `<text x="72" y="${H - 10}" font-family="'SF Mono','Menlo',monospace" font-size="15" font-weight="700" fill="none" stroke="#0a0a0a" stroke-width="4" stroke-linejoin="round" text-anchor="middle">${resetsIn}</text>
+  <text x="72" y="${H - 10}" font-family="'SF Mono','Menlo',monospace" font-size="15" font-weight="700" fill="#ffffff" text-anchor="middle">${resetsIn}</text>`
     : "";
 
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}">
@@ -60,7 +60,10 @@ export function formatResetsIn(resetsAt: Date | null): string {
   const ms = resetsAt.getTime() - Date.now();
   if (ms <= 0) return "soon";
   const totalMin = Math.floor(ms / 60_000);
-  const h = Math.floor(totalMin / 60);
+  const d = Math.floor(totalMin / (60 * 24));
+  const h = Math.floor((totalMin - d * 60 * 24) / 60);
   const m = totalMin % 60;
-  return h > 0 ? `${h}h ${m}m` : `${m}m`;
+  if (d > 0) return `${d}d ${h}h`;
+  if (h > 0) return `${h}h ${m}m`;
+  return `${m}m`;
 }

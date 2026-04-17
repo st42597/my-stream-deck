@@ -1,4 +1,4 @@
-import {
+import streamDeck, {
   SingletonAction,
   WillAppearEvent,
   WillDisappearEvent,
@@ -13,7 +13,7 @@ export interface PollingSettings {
   [key: string]: JsonValue;
 }
 
-const DEFAULT_REFRESH_SEC = 300;
+const DEFAULT_REFRESH_SEC = 180;
 
 export abstract class BasePollingAction<S extends PollingSettings> extends SingletonAction<S> {
   private intervalId: ReturnType<typeof setInterval> | null = null;
@@ -21,11 +21,17 @@ export abstract class BasePollingAction<S extends PollingSettings> extends Singl
   protected action: KeyAction<S> | null = null;
 
   override async onWillAppear(ev: WillAppearEvent<S>): Promise<void> {
-    if (!ev.action.isKey()) return;
+    if (!ev.action.isKey()) {
+      streamDeck.logger.warn(`[${this.constructor.name}] onWillAppear: not a key action`);
+      return;
+    }
     this.action = ev.action;
     this.refreshSec = ev.payload.settings.refreshSeconds ?? DEFAULT_REFRESH_SEC;
-    await this.updateDisplay();
+    streamDeck.logger.info(`[${this.constructor.name}] onWillAppear: refresh=${this.refreshSec}s`);
     this.startInterval();
+    this.updateDisplay().catch((err) =>
+      streamDeck.logger.error(`[${this.constructor.name}] initial updateDisplay failed: ${err}`),
+    );
   }
 
   override onWillDisappear(_ev: WillDisappearEvent<S>): void {
@@ -49,7 +55,11 @@ export abstract class BasePollingAction<S extends PollingSettings> extends Singl
 
   private startInterval(): void {
     if (this.refreshSec <= 0) return;
-    this.intervalId = setInterval(() => { this.updateDisplay().catch(() => {}); }, this.refreshSec * 1_000);
+    this.intervalId = setInterval(() => {
+      this.updateDisplay().catch((err) =>
+        streamDeck.logger.error(`[${this.constructor.name}] tick updateDisplay failed: ${err}`),
+      );
+    }, this.refreshSec * 1_000);
   }
 
   private stopInterval(): void {
