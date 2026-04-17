@@ -9,7 +9,7 @@ export interface ChartOptions {
 
 const W = 144;
 const H = 144;
-const PAD_TOP = 24;
+const PAD_TOP = 28;
 const CHART_H = H - PAD_TOP - 16;
 
 export function renderChartSvg(opts: ChartOptions): string {
@@ -51,7 +51,8 @@ export function renderChartSvg(opts: ChartOptions): string {
   <line x1="0" y1="${PAD_TOP + CHART_H * 0.75}" x2="${W}" y2="${PAD_TOP + CHART_H * 0.75}" stroke="#ffffff" stroke-opacity="0.04" stroke-width="1"/>
   ${areaPath}
   ${linePath}
-  <text x="10" y="19" font-family="'SF Mono','Menlo',monospace" font-size="17" font-weight="700" fill="${color}" letter-spacing="1">${label}</text>
   <text x="${W / 2}" y="${pctY.toFixed(1)}" font-family="'SF Mono','Menlo',monospace" font-size="${fontSize}" font-weight="700" fill="#ffffff" text-anchor="middle" filter="url(#glow)">${current}%</text>
+  <rect x="0" y="0" width="${W}" height="28" fill="#0a0a0a" fill-opacity="0.75"/>
+  <text x="72" y="20" font-family="'SF Mono','Menlo',monospace" font-size="18" font-weight="700" fill="${color}" text-anchor="middle" letter-spacing="3">${label}</text>
 </svg>`;
 }

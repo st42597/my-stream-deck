@@ -30,8 +30,8 @@ export function renderButtonSvg(opts: ButtonOptions): string {
   const pctY = Math.round(H / 2 + pctFontSize * 0.36);
 
   const resetBlock = resetsIn
-    ? `<rect x="0" y="${H - 26}" width="${W}" height="26" fill="#0a0a0a" fill-opacity="0.75"/>
-  <text x="72" y="${H - 7}" font-family="'SF Mono','Menlo',monospace" font-size="13" font-weight="600" fill="${color}" text-anchor="middle">↺ ${resetsIn}</text>`
+    ? `<rect x="0" y="${H - 30}" width="${W}" height="30" fill="#0a0a0a" fill-opacity="0.75"/>
+  <text x="72" y="${H - 10}" font-family="'SF Mono','Menlo',monospace" font-size="15" font-weight="600" fill="${color}" text-anchor="middle">↺ ${resetsIn}</text>`
     : "";
 
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}">
