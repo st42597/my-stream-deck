@@ -9,16 +9,21 @@ export interface SystemSample {
   timestamp: number;
 }
 
-const MAX_SAMPLES = 24; // 2 minutes at 5s interval
+const MAX_WINDOW_MS = 120_000; // longest chart window (2m)
 const samples: SystemSample[] = [];
 let pollingTimer: ReturnType<typeof setInterval> | null = null;
 let refCount = 0;
+let currentIntervalMs = 5_000;
+
+function maxSamples(): number {
+  return Math.ceil(MAX_WINDOW_MS / currentIntervalMs) + 2;
+}
 
 export function startPolling(): void {
   refCount++;
   if (pollingTimer !== null) return;
   collectSample();
-  pollingTimer = setInterval(collectSample, 5_000);
+  pollingTimer = setInterval(collectSample, currentIntervalMs);
 }
 
 export function stopPolling(): void {
@@ -27,6 +32,17 @@ export function stopPolling(): void {
   if (pollingTimer !== null) {
     clearInterval(pollingTimer);
     pollingTimer = null;
+  }
+}
+
+export function setPollingInterval(intervalMs: number): void {
+  const ms = Math.max(1_000, Math.min(60_000, Math.round(intervalMs)));
+  if (ms === currentIntervalMs) return;
+  currentIntervalMs = ms;
+  if (pollingTimer !== null) {
+    clearInterval(pollingTimer);
+    collectSample();
+    pollingTimer = setInterval(collectSample, currentIntervalMs);
   }
 }
 
@@ -42,7 +58,8 @@ export function getLatest(): SystemSample | null {
 async function collectSample(): Promise<void> {
   const [cpuPercent, ramPercent] = await Promise.all([getCpuPercent(), getRamPercent()]);
   samples.push({ cpuPercent, ramPercent, timestamp: Date.now() });
-  if (samples.length > MAX_SAMPLES) samples.shift();
+  const cap = maxSamples();
+  while (samples.length > cap) samples.shift();
 }
 
 async function getCpuPercent(): Promise<number> {

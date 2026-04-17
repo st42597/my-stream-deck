@@ -58,6 +58,26 @@
       border-color: #ff9500;
       color: #ff9500;
     }
+    .field {
+      margin-top: 14px;
+    }
+    input[type="number"] {
+      width: 100%;
+      padding: 8px 10px;
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 5px;
+      color: #ccc;
+      font-family: 'SF Mono', 'Menlo', monospace;
+      font-size: 12px;
+      outline: none;
+    }
+    input[type="number"]:focus {
+      border-color: #00ff88;
+    }
+    input[type="number"].ram:focus {
+      border-color: #ff9500;
+    }
     .hint {
       margin-top: 10px;
       color: #444;
@@ -75,12 +95,17 @@
     <button data-value="1m" class="active">1m</button>
     <button data-value="2m">2m</button>
   </div>
-  <div class="hint">Samples every 5 seconds.<br>Updates automatically.</div>
+
+  <div class="field">
+    <label>Sample Interval (seconds)</label>
+    <input type="number" id="intervalInput" min="1" max="60" step="1" value="5" />
+  </div>
+  <div class="hint" id="hintEl">Samples every 5 seconds.<br>Range: 1-60s.</div>
 
   <script>
     let ws;
     let uuid;
-    let settings = { window: "1m" };
+    let settings = { window: "1m", intervalSec: 5 };
     let isCpu = true;
 
     const connectElgatoStreamDeckSocket = (inPort, inPropertyInspectorUUID, inRegisterEvent, inInfo, inActionInfo) => {
@@ -94,6 +119,7 @@
           document.getElementById("titleEl").classList.add("ram");
           document.getElementById("titleEl").textContent = "RAM MONITOR";
           document.getElementById("windowGroup").classList.add("ram");
+          document.getElementById("intervalInput").classList.add("ram");
         }
       } catch {}
 
@@ -108,16 +134,27 @@
         const data = JSON.parse(evt.data);
         if (data.event === "didReceiveSettings") {
           settings = { ...settings, ...data.payload.settings };
+          settings.intervalSec = clampInterval(settings.intervalSec);
           updateUI();
         }
       };
     };
+
+    function clampInterval(n) {
+      const v = Math.round(Number(n));
+      if (!Number.isFinite(v)) return 5;
+      return Math.max(1, Math.min(60, v));
+    }
 
     function updateUI() {
       const buttons = document.querySelectorAll("#windowGroup button");
       buttons.forEach((btn) => {
         btn.classList.toggle("active", btn.dataset.value === settings.window);
       });
+      const input = document.getElementById("intervalInput");
+      if (document.activeElement !== input) input.value = settings.intervalSec;
+      document.getElementById("hintEl").innerHTML =
+        `Samples every ${settings.intervalSec} second${settings.intervalSec === 1 ? "" : "s"}.<br>Range: 1-60s.`;
     }
 
     function saveSettings() {
@@ -131,6 +168,22 @@
         updateUI();
         saveSettings();
       });
+    });
+
+    const intervalInput = document.getElementById("intervalInput");
+    function commitInterval() {
+      const next = clampInterval(intervalInput.value);
+      intervalInput.value = next;
+      if (next !== settings.intervalSec) {
+        settings.intervalSec = next;
+        updateUI();
+        saveSettings();
+      }
+    }
+    intervalInput.addEventListener("change", commitInterval);
+    intervalInput.addEventListener("blur", commitInterval);
+    intervalInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") { e.preventDefault(); intervalInput.blur(); }
     });
   </script>
 </body>
