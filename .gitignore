@@ -4,3 +4,4 @@ logs/
 .claude/
 *.local
 .DS_Store
+.omc/
