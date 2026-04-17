@@ -1,6 +1,6 @@
 import { execFile } from "child_process";
 
-const POLL_INTERVAL_MS = 10_000;
+const POLL_INTERVAL_MS = 5_000;
 const OSASCRIPT_TIMEOUT_MS = 3_000;
 
 const READ_BADGE_SCRIPT = `
@@ -43,6 +43,10 @@ export function stopBadgePolling(): void {
 
 export function getBadgeStatus(): BadgeStatus {
   return cached;
+}
+
+export function pollBadgeNow(): void {
+  pollOnce();
 }
 
 function pollOnce(): void {

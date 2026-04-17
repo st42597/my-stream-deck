@@ -12,6 +12,7 @@ import {
   startBadgePolling,
   stopBadgePolling,
   getBadgeStatus,
+  pollBadgeNow,
 } from "../utils/slackDockBadge.js";
 import { renderSlackSvg } from "../utils/renderSlack.js";
 import { svgToDataUrl } from "../utils/svgUtils.js";
@@ -30,7 +31,7 @@ tell application "System Events"
   tell process "Slack"
     key code 46 using {command down, shift down}
     delay 0.15
-    key code 125 using {option down, shift down}
+    key code 126 using {option down, shift down}
   end tell
 end tell
 `;
@@ -59,6 +60,12 @@ export class SlackAction extends SingletonAction<SlackSettings> {
 
   override onKeyDown(_ev: KeyDownEvent<SlackSettings>): void {
     execFile("osascript", ["-e", OPEN_LATEST_ACTIVITY_SCRIPT], () => {});
+    for (let i = 1; i <= 4; i++) {
+      setTimeout(() => {
+        pollBadgeNow();
+        this.updateDisplay();
+      }, i * 500);
+    }
   }
 
   private updateDisplay(): void {
