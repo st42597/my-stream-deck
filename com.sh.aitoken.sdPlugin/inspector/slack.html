@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8"/>
-  <title>Slack Notifications Settings</title>
+  <title>Slack Activity Settings</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -19,103 +19,72 @@
       margin-bottom: 14px;
       letter-spacing: 1px;
     }
-    label {
-      display: block;
-      color: #666;
+    .section {
+      margin-bottom: 14px;
+    }
+    h3 {
       font-size: 11px;
-      margin-bottom: 5px;
+      color: #888;
+      margin-bottom: 6px;
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
-    input {
-      width: 100%;
-      background: #1a1a1a;
-      border: 1px solid #333;
-      border-radius: 5px;
-      color: #eee;
-      padding: 7px 9px;
-      font-family: 'SF Mono', 'Menlo', monospace;
+    p, li {
+      color: #aaa;
       font-size: 11px;
-      outline: none;
+      line-height: 1.6;
     }
-    input:focus { border-color: #e01e5a; }
-    .hint {
-      margin-top: 7px;
-      color: #444;
+    ol { padding-left: 18px; }
+    code {
+      background: #1a1a1a;
+      padding: 1px 5px;
+      border-radius: 3px;
+      color: #e01e5a;
+      font-size: 10px;
+    }
+    .note {
+      margin-top: 10px;
+      padding: 8px 10px;
+      border-radius: 5px;
+      background: #1a1a1a;
+      border: 1px solid #222;
+      color: #888;
       font-size: 10px;
       line-height: 1.6;
     }
+    .note.warn { border-color: #3a2a1a; color: #d4a05a; }
     a { color: #e01e5a; text-decoration: none; }
-    .status {
-      margin-top: 12px;
-      padding: 7px 9px;
-      border-radius: 5px;
-      font-size: 11px;
-      background: #1a1a1a;
-      color: #666;
-      border: 1px solid #222;
-    }
-    .status.ok { color: #30d158; border-color: #1a3a20; }
-    .status.err { color: #ff3b30; border-color: #3a1a1a; }
   </style>
 </head>
 <body>
-  <div class="title"># SLACK ALERTS</div>
+  <div class="title"># SLACK ACTIVITY</div>
 
-  <label>User OAuth Token</label>
-  <input type="password" id="tokenInput" placeholder="xoxp-..."/>
-  <div class="hint">
-    1. <a href="https://api.slack.com/apps" target="_blank">api.slack.com/apps</a> 에서 앱 생성<br>
-    2. OAuth Scopes: <code>channels:read, groups:read, im:read, mpim:read</code><br>
-    3. Install to Workspace → User OAuth Token 복사
+  <div class="section">
+    <p>Reads the <strong>Slack Dock badge</strong> directly — so the count matches your Slack notification preferences exactly (mutes, keywords, DnD, channel settings).</p>
   </div>
-  <div class="status" id="statusEl">Token을 입력하면 알림 수가 표시됩니다.</div>
+
+  <div class="section">
+    <h3>Required: Accessibility permission</h3>
+    <ol>
+      <li>System Settings → Privacy & Security → <strong>Accessibility</strong></li>
+      <li>Enable <strong>Elgato Stream Deck</strong> (and allow any child process prompts)</li>
+      <li>Slack app must be running (badge appears on Dock icon)</li>
+    </ol>
+    <div class="note warn">
+      First press may trigger a permission prompt. Grant it, then the badge number appears within a few seconds.
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>Button action</h3>
+    <p>Press the key to open Slack and jump to the <strong>next unread</strong> channel/DM (<code>⌥⇧↓</code>) in sidebar order — respects your mute and notification settings. Press repeatedly to cycle through unreads.</p>
+  </div>
 
   <script>
-    let ws, uuid;
-    let settings = {};
-
-    const connectElgatoStreamDeckSocket = (inPort, inPropertyInspectorUUID, inRegisterEvent, inInfo, inActionInfo) => {
-      uuid = inPropertyInspectorUUID;
-      ws = new WebSocket(`ws://127.0.0.1:${inPort}`);
-
-      ws.onopen = () => {
-        ws.send(JSON.stringify({ event: inRegisterEvent, uuid }));
-        ws.send(JSON.stringify({ event: "getSettings", context: uuid }));
-      };
-
-      ws.onmessage = (evt) => {
-        const data = JSON.parse(evt.data);
-        if (data.event === "didReceiveSettings") {
-          settings = { ...settings, ...data.payload.settings };
-          if (settings.token) {
-            document.getElementById("tokenInput").value = settings.token;
-            setStatus("ok", "Token saved. Polling every 10s.");
-          }
-        }
-      };
+    const connectElgatoStreamDeckSocket = (inPort, uuid, inRegisterEvent) => {
+      const ws = new WebSocket(`ws://127.0.0.1:${inPort}`);
+      ws.onopen = () => ws.send(JSON.stringify({ event: inRegisterEvent, uuid }));
     };
-
-    function setStatus(type, msg) {
-      const el = document.getElementById("statusEl");
-      el.className = "status " + type;
-      el.textContent = msg;
-    }
-
-    function saveSettings() {
-      const token = document.getElementById("tokenInput").value.trim();
-      if (!token) return;
-      if (!token.startsWith("xoxp-") && !token.startsWith("xoxe-")) {
-        setStatus("err", "Token should start with xoxp- or xoxe-");
-        return;
-      }
-      settings.token = token;
-      ws.send(JSON.stringify({ event: "setSettings", context: uuid, payload: settings }));
-      setStatus("ok", "Token saved. Polling every 10s.");
-    }
-
-    document.getElementById("tokenInput").addEventListener("change", saveSettings);
-    document.getElementById("tokenInput").addEventListener("blur", saveSettings);
   </script>
 </body>
 </html>
