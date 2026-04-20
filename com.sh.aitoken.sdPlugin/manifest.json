@@ -86,6 +86,19 @@
         }
       ],
       "PropertyInspectorPath": "inspector/slack.html"
+    },
+    {
+      "Name": "Claude Session",
+      "UUID": "com.sh.aitoken.claudesession",
+      "Icon": "imgs/actions/claudesession/icon",
+      "Tooltip": "Monitors a Claude Code session slot (idle/thinking/running/approval).",
+      "SupportedInMultiActions": false,
+      "States": [
+        {
+          "Image": "imgs/actions/claudesession/icon"
+        }
+      ],
+      "PropertyInspectorPath": "inspector/claudesession.html"
     }
   ]
 }

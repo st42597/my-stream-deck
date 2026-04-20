@@ -5,7 +5,8 @@
   "main": "com.sh.aitoken.sdPlugin/bin/plugin.js",
   "scripts": {
     "build": "rollup -c rollup.config.mjs",
-    "watch": "rollup -c rollup.config.mjs --watch"
+    "watch": "rollup -c rollup.config.mjs --watch",
+    "test": "node --experimental-strip-types --no-warnings scripts/test-claude-session.mjs"
   },
   "keywords": [],
   "author": "",
