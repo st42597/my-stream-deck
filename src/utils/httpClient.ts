@@ -17,3 +17,24 @@ export function httpsGet(
     req.end();
   });
 }
+
+export function httpsPost(
+  hostname: string,
+  path: string,
+  headers: Record<string, string>,
+  body: string,
+): Promise<{ body: string; status: number }> {
+  return new Promise((resolve, reject) => {
+    const payload = Buffer.from(body, "utf8");
+    const h = { ...headers, "Content-Length": String(payload.length) };
+    const req = https.request({ hostname, path, method: "POST", headers: h }, (res: IncomingMessage) => {
+      let body = "";
+      res.on("data", (c: Buffer) => (body += c.toString()));
+      res.on("end", () => resolve({ body, status: res.statusCode ?? 0 }));
+    });
+    req.on("error", reject);
+    req.setTimeout(10_000, () => { req.destroy(); reject(new Error("timeout")); });
+    req.write(payload);
+    req.end();
+  });
+}

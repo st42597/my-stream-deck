@@ -4,10 +4,13 @@ import fs from "fs";
 import path from "path";
 import os from "os";
 import streamDeck from "@elgato/streamdeck";
-import { httpsGet } from "./httpClient.js";
+import { httpsGet, httpsPost } from "./httpClient.js";
 
 const execFileAsync = promisify(execFile);
 const CACHE_FILE = path.join(os.tmpdir(), "aitoken-claude.json");
+const KEYCHAIN_SERVICE = "Claude Code-credentials";
+const CLIENT_ID = "9d1c250a-e61b-44d9-88ed-5944d1962f5e";
+const EXPIRY_BUFFER_MS = 60_000;
 
 export interface ClaudeUsageWindow {
   utilization: number;  // 0-100
@@ -19,12 +22,82 @@ export interface ClaudeUsageResult {
   sevenDay: ClaudeUsageWindow | null;
 }
 
-async function getAccessToken(): Promise<string> {
-  const { stdout } = await execFileAsync("security", [
-    "find-generic-password", "-s", "Claude Code-credentials", "-w",
+interface StoredCreds {
+  claudeAiOauth: {
+    accessToken: string;
+    refreshToken: string;
+    expiresAt: number;
+    [k: string]: unknown;
+  };
+}
+
+async function readKeychain(): Promise<{ account: string; creds: StoredCreds }> {
+  const [pwResult, metaResult] = await Promise.all([
+    execFileAsync("security", ["find-generic-password", "-s", KEYCHAIN_SERVICE, "-w"]),
+    execFileAsync("security", ["find-generic-password", "-s", KEYCHAIN_SERVICE]),
   ]);
-  const creds = JSON.parse(stdout.trim()) as { claudeAiOauth: { accessToken: string } };
-  return creds.claudeAiOauth.accessToken;
+  const creds = JSON.parse(pwResult.stdout.trim()) as StoredCreds;
+  const acctMatch = metaResult.stdout.match(/"acct"<blob>="([^"]+)"/);
+  const account = acctMatch ? acctMatch[1] : "";
+  return { account, creds };
+}
+
+async function writeKeychain(account: string, creds: StoredCreds): Promise<void> {
+  await execFileAsync("security", [
+    "add-generic-password", "-U",
+    "-s", KEYCHAIN_SERVICE,
+    "-a", account,
+    "-w", JSON.stringify(creds),
+  ]);
+}
+
+async function refreshAccessToken(creds: StoredCreds): Promise<StoredCreds> {
+  const body = JSON.stringify({
+    grant_type: "refresh_token",
+    refresh_token: creds.claudeAiOauth.refreshToken,
+    client_id: CLIENT_ID,
+  });
+  const { body: respBody, status } = await httpsPost(
+    "console.anthropic.com",
+    "/v1/oauth/token",
+    { "Content-Type": "application/json", "Accept": "application/json" },
+    body,
+  );
+  if (status !== 200) {
+    throw new Error(`refresh failed status=${status} body=${respBody.slice(0, 200)}`);
+  }
+  const data = JSON.parse(respBody) as {
+    access_token?: string;
+    refresh_token?: string;
+    expires_in?: number;
+  };
+  if (!data.access_token) throw new Error("refresh missing access_token");
+  const nextExpiresAt = Date.now() + (data.expires_in ?? 3600) * 1000;
+  return {
+    ...creds,
+    claudeAiOauth: {
+      ...creds.claudeAiOauth,
+      accessToken: data.access_token,
+      refreshToken: data.refresh_token ?? creds.claudeAiOauth.refreshToken,
+      expiresAt: nextExpiresAt,
+    },
+  };
+}
+
+async function getAccessToken(): Promise<string> {
+  const { account, creds } = await readKeychain();
+  const expiresAt = creds.claudeAiOauth.expiresAt ?? 0;
+  if (expiresAt - EXPIRY_BUFFER_MS > Date.now()) {
+    return creds.claudeAiOauth.accessToken;
+  }
+  streamDeck.logger.info(`[claudeOAuth] token expired (expiresAt=${new Date(expiresAt).toISOString()}), refreshing`);
+  const next = await refreshAccessToken(creds);
+  if (account) {
+    await writeKeychain(account, next);
+  } else {
+    streamDeck.logger.warn(`[claudeOAuth] could not determine keychain account, skipping write-back`);
+  }
+  return next.claudeAiOauth.accessToken;
 }
 
 let cachedResult: ClaudeUsageResult | null = loadCache();
@@ -49,18 +122,31 @@ function saveCache(r: ClaudeUsageResult): void {
   try { fs.writeFileSync(CACHE_FILE, JSON.stringify(r)); } catch {}
 }
 
-export async function fetchClaudeUsage(): Promise<ClaudeUsageResult> {
-  if (Date.now() < cooldownUntil) {
-    return cachedResult ?? { fiveHour: null, sevenDay: null };
-  }
-  const token = await getAccessToken();
-  const { body, status } = await httpsGet("api.anthropic.com", "/api/oauth/usage", {
+async function usageRequest(token: string) {
+  return httpsGet("api.anthropic.com", "/api/oauth/usage", {
     "Authorization": `Bearer ${token}`,
     "Accept": "application/json",
     "Content-Type": "application/json",
     "anthropic-beta": "oauth-2025-04-20",
     "User-Agent": "claude-code/2.1.109",
   });
+}
+
+export async function fetchClaudeUsage(): Promise<ClaudeUsageResult> {
+  if (Date.now() < cooldownUntil) {
+    return cachedResult ?? { fiveHour: null, sevenDay: null };
+  }
+  let token = await getAccessToken();
+  let { body, status } = await usageRequest(token);
+
+  if (status === 401) {
+    streamDeck.logger.info(`[claudeOAuth] 401 — forcing refresh`);
+    const { account, creds } = await readKeychain();
+    const refreshed = await refreshAccessToken(creds);
+    if (account) await writeKeychain(account, refreshed);
+    token = refreshed.claudeAiOauth.accessToken;
+    ({ body, status } = await usageRequest(token));
+  }
 
   if (status === 429) {
     cooldownUntil = Date.now() + RATE_LIMIT_COOLDOWN_MS;
