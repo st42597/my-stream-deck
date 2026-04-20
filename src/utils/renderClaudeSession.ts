@@ -103,7 +103,7 @@ export function renderClaudeSessionSvg(opts: ClaudeSessionOptions): string {
 
   if (state === "empty") {
     const body = `
-  <text x="72" y="84" font-family="${FONT}" font-size="15" font-weight="600" fill="${style.sub}" text-anchor="middle">no session</text>`;
+  <text x="72" y="77" font-family="${FONT}" font-size="15" font-weight="600" fill="${style.sub}" text-anchor="middle">no session</text>`;
     return svgShell(body, style.accent, header);
   }
 
@@ -117,7 +117,6 @@ export function renderClaudeSessionSvg(opts: ClaudeSessionOptions): string {
       <stop offset="0%" stop-color="${style.accent}" stop-opacity="0.12"/>
       <stop offset="100%" stop-color="${style.accent}" stop-opacity="0"/>
     </radialGradient>
-    <filter id="glow"><feGaussianBlur in="SourceGraphic" stdDeviation="2" result="b"/><feComposite in="SourceGraphic" in2="b" operator="over"/></filter>
   </defs>`;
 
   const ring = state === "approval"
@@ -126,11 +125,12 @@ export function renderClaudeSessionSvg(opts: ClaudeSessionOptions): string {
 
   const layout = layoutProject(project || "UNKNOWN");
   const lines = layout.lines;
-  const centerY = 78;
+  const centerY = 72;
   const totalH = lines.length === 1 ? 0 : (lines.length - 1) * layout.lineHeight;
-  const startY = centerY - totalH / 2;
+  const startCenter = centerY - totalH / 2;
+  const baselineOffset = layout.fontSize * 0.36;
   const projectText = lines
-    .map((line, i) => `<text x="72" y="${startY + i * layout.lineHeight}" font-family="'SF Pro Display','Helvetica',sans-serif" font-size="${layout.fontSize}" font-weight="800" fill="#ffffff" text-anchor="middle" dominant-baseline="middle" filter="url(#glow)">${escape(line)}</text>`)
+    .map((line, i) => `<text x="72" y="${startCenter + i * layout.lineHeight + baselineOffset}" font-family="'SF Pro Display','Helvetica',sans-serif" font-size="${layout.fontSize}" font-weight="800" fill="#ffffff" text-anchor="middle">${escape(line)}</text>`)
     .join("\n  ");
 
   const subText = state === "running" && tool

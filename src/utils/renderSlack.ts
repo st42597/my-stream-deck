@@ -58,10 +58,6 @@ function countSvg(count: number): string {
 
   const defs = `
   <defs>
-    <filter id="glow">
-      <feGaussianBlur in="SourceGraphic" stdDeviation="4" result="blur"/>
-      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
-    </filter>
     <radialGradient id="bgGlow" cx="50%" cy="50%" r="50%">
       <stop offset="0%" stop-color="${ACCENT}" stop-opacity="0.08"/>
       <stop offset="100%" stop-color="${ACCENT}" stop-opacity="0"/>
@@ -70,7 +66,7 @@ function countSvg(count: number): string {
 
   return svgShell(`
   <rect width="${W}" height="${H}" fill="url(#bgGlow)"/>
-  <text x="72" y="${H / 2 + numFontSize * 0.36}" font-family="${FONT}" font-size="${numFontSize}" font-weight="700" fill="#ffffff" text-anchor="middle" filter="url(#glow)">${countStr}</text>
+  <text x="72" y="${H / 2 + numFontSize * 0.36}" font-family="${FONT}" font-size="${numFontSize}" font-weight="700" fill="#ffffff" text-anchor="middle">${countStr}</text>
   <rect x="0" y="${H - 30}" width="${W}" height="30" fill="${BG}" fill-opacity="0.75"/>
   <text x="72" y="${H - 10}" font-family="${FONT}" font-size="15" font-weight="600" fill="${ACCENT}" text-anchor="middle">${label}</text>`, defs);
 }

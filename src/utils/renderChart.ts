@@ -32,7 +32,7 @@ export function renderChartSvg(opts: ChartOptions): string {
   }
 
   const fontSize = current >= 100 ? 38 : 44;
-  const pctY = PAD_TOP + CHART_H / 2 + fontSize * 0.36;
+  const pctY = H / 2 + fontSize * 0.36;
 
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}">
   <defs>
@@ -40,10 +40,6 @@ export function renderChartSvg(opts: ChartOptions): string {
       <stop offset="0%" stop-color="${color}" stop-opacity="0.5"/>
       <stop offset="100%" stop-color="${color}" stop-opacity="0.02"/>
     </linearGradient>
-    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
-      <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur"/>
-      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
-    </filter>
   </defs>
   <rect width="${W}" height="${H}" fill="#0a0a0a"/>
   <line x1="0" y1="${PAD_TOP + CHART_H * 0.25}" x2="${W}" y2="${PAD_TOP + CHART_H * 0.25}" stroke="#ffffff" stroke-opacity="0.04" stroke-width="1"/>
@@ -51,7 +47,7 @@ export function renderChartSvg(opts: ChartOptions): string {
   <line x1="0" y1="${PAD_TOP + CHART_H * 0.75}" x2="${W}" y2="${PAD_TOP + CHART_H * 0.75}" stroke="#ffffff" stroke-opacity="0.04" stroke-width="1"/>
   ${areaPath}
   ${linePath}
-  <text x="${W / 2}" y="${pctY.toFixed(1)}" font-family="'SF Mono','Menlo',monospace" font-size="${fontSize}" font-weight="700" fill="#ffffff" text-anchor="middle" filter="url(#glow)">${current}%</text>
+  <text x="${W / 2}" y="${pctY.toFixed(1)}" font-family="'SF Mono','Menlo',monospace" font-size="${fontSize}" font-weight="700" fill="#ffffff" text-anchor="middle">${current}%</text>
   <rect x="0" y="0" width="${W}" height="28" fill="#0a0a0a" fill-opacity="0.75"/>
   <text x="72" y="20" font-family="'SF Mono','Menlo',monospace" font-size="18" font-weight="700" fill="${color}" text-anchor="middle" letter-spacing="3">${label}</text>
 </svg>`;

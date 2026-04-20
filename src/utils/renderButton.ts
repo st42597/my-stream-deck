@@ -30,8 +30,7 @@ export function renderButtonSvg(opts: ButtonOptions): string {
   const pctY = Math.round(H / 2 + pctFontSize * 0.36);
 
   const resetBlock = resetsIn
-    ? `<text x="72" y="${H - 10}" font-family="'SF Mono','Menlo',monospace" font-size="15" font-weight="700" fill="none" stroke="#0a0a0a" stroke-width="4" stroke-linejoin="round" text-anchor="middle">${resetsIn}</text>
-  <text x="72" y="${H - 10}" font-family="'SF Mono','Menlo',monospace" font-size="15" font-weight="700" fill="#ffffff" text-anchor="middle">${resetsIn}</text>`
+    ? `<text x="72" y="${H - 10}" font-family="'SF Mono','Menlo',monospace" font-size="15" font-weight="700" fill="#ffffff" text-anchor="middle">${resetsIn}</text>`
     : "";
 
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}">
@@ -40,15 +39,11 @@ export function renderButtonSvg(opts: ButtonOptions): string {
       <stop offset="0%" stop-color="${color}" stop-opacity="0.5"/>
       <stop offset="100%" stop-color="${color}" stop-opacity="0.12"/>
     </linearGradient>
-    <filter id="glow">
-      <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="b"/>
-      <feComposite in="SourceGraphic" in2="b" operator="over"/>
-    </filter>
   </defs>
   <rect width="${W}" height="${H}" fill="#0a0a0a"/>
   <rect x="0" y="${fillY}" width="${W}" height="${fillH}" fill="url(#fg)"/>
   ${fillH > 0 ? `<line x1="0" y1="${fillY}" x2="${W}" y2="${fillY}" stroke="${color}" stroke-width="1.5" stroke-opacity="0.6"/>` : ""}
-  <text x="72" y="${pctY}" font-family="'SF Mono','Menlo',monospace" font-size="${pctFontSize}" font-weight="700" fill="#ffffff" text-anchor="middle" filter="url(#glow)">${pct}%</text>
+  <text x="72" y="${pctY}" font-family="'SF Mono','Menlo',monospace" font-size="${pctFontSize}" font-weight="700" fill="#ffffff" text-anchor="middle">${pct}%</text>
   <rect x="0" y="0" width="${W}" height="28" fill="#0a0a0a" fill-opacity="0.75"/>
   <text x="72" y="20" font-family="'SF Mono','Menlo',monospace" font-size="18" font-weight="700" fill="${color}" text-anchor="middle" letter-spacing="3">${label}</text>
   ${resetBlock}
