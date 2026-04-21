@@ -109,6 +109,5 @@ export class ClaudeSessionAction extends SingletonAction<ClaudeSessionSettings> 
     });
     inst.act.setImage(svgToDataUrl(svg)).catch(() => {});
     inst.act.setTitle("").catch(() => {});
-    if (session?.state === "approval") inst.act.showAlert().catch(() => {});
   }
 }

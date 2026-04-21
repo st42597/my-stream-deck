@@ -17,6 +17,7 @@ export interface ClaudeSession {
   message: string;
   event: string;
   updatedAt: number;
+  createdAt: number;
   ageMs: number;
   app: string;
   appPid: number;
@@ -56,10 +57,16 @@ export function readSessions(): ClaudeSession[] {
     if (!name.endsWith(".json")) continue;
     const full = path.join(SESSIONS_DIR, name);
     let raw: RawRecord;
-    try { raw = JSON.parse(fs.readFileSync(full, "utf8")) as RawRecord; } catch { continue; }
+    let createdAt: number;
+    try {
+      raw = JSON.parse(fs.readFileSync(full, "utf8")) as RawRecord;
+      const st = fs.statSync(full);
+      createdAt = st.birthtimeMs || st.ctimeMs || 0;
+    } catch { continue; }
     const updatedAt = typeof raw.updatedAt === "number" ? raw.updatedAt : 0;
     const ageMs = now - updatedAt;
     if (ageMs > STALE_CLEANUP_MS) { try { fs.unlinkSync(full); } catch {} continue; }
+    if (!createdAt) createdAt = updatedAt;
     const baseState = (raw.state as SessionState) ?? "idle";
     const claudePid = raw.claudePid ?? 0;
     const pidAlive = claudePid > 0 ? isPidAlive(claudePid) : true;
@@ -78,6 +85,7 @@ export function readSessions(): ClaudeSession[] {
       message: raw.message ?? "",
       event: raw.event ?? "",
       updatedAt,
+      createdAt,
       ageMs,
       app: raw.app ?? "",
       appPid: raw.appPid ?? 0,
@@ -85,7 +93,7 @@ export function readSessions(): ClaudeSession[] {
       claudePid: raw.claudePid ?? 0,
     });
   }
-  out.sort((a, b) => b.updatedAt - a.updatedAt);
+  out.sort((a, b) => a.createdAt - b.createdAt || a.sessionId.localeCompare(b.sessionId));
   cached = { at: now, sessions: out };
   return out;
 }

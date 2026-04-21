@@ -26,6 +26,11 @@ state_map = {
 }
 state = state_map.get(EVENT, "idle")
 
+# Claude Code Notification hook fires for both permission prompts and the
+# 60s idle "waiting for input" nudge. Only the former is a real approval.
+if EVENT == "Notification" and "permission" not in message.lower():
+    state = "idle"
+
 
 def read_proc(pid: int):
     try:
