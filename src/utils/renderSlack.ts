@@ -1,5 +1,3 @@
-import type { BadgeError } from "./slackDockBadge.js";
-
 const W = 144;
 const H = 144;
 const BG = "#0a0a0a";
@@ -9,12 +7,10 @@ const FONT = "'SF Mono','Menlo',monospace";
 export interface SlackButtonOptions {
   count: number;
   silent: boolean;
-  error: BadgeError;
 }
 
 export function renderSlackSvg(opts: SlackButtonOptions): string {
-  const { count, silent, error } = opts;
-  if (error) return errorSvg(error);
+  const { count, silent } = opts;
   if (silent) return silentSvg();
   if (count === 0) return zeroSvg();
   return countSvg(count);
@@ -31,13 +27,6 @@ function svgShell(body: string, extraDefs = ""): string {
 function slackHeader(color: string): string {
   return `<rect x="0" y="0" width="${W}" height="28" fill="${BG}" fill-opacity="0.75"/>
   <text x="72" y="20" font-family="${FONT}" font-size="18" font-weight="700" fill="${color}" text-anchor="middle" letter-spacing="3">SLACK</text>`;
-}
-
-function errorSvg(error: Exclude<BadgeError, null>): string {
-  const [line1, line2] = errorLabel(error);
-  return svgShell(`
-  <text x="72" y="82" font-family="${FONT}" font-size="12" fill="#ff9500" text-anchor="middle">${line1}</text>
-  <text x="72" y="100" font-family="${FONT}" font-size="10" fill="#664422" text-anchor="middle">${line2}</text>`);
 }
 
 function zeroSvg(): string {
@@ -69,12 +58,4 @@ function countSvg(count: number): string {
   <text x="72" y="${H / 2 + numFontSize * 0.36}" font-family="${FONT}" font-size="${numFontSize}" font-weight="700" fill="#ffffff" text-anchor="middle">${countStr}</text>
   <rect x="0" y="${H - 30}" width="${W}" height="30" fill="${BG}" fill-opacity="0.75"/>
   <text x="72" y="${H - 10}" font-family="${FONT}" font-size="15" font-weight="600" fill="${ACCENT}" text-anchor="middle">${label}</text>`, defs);
-}
-
-function errorLabel(error: Exclude<BadgeError, null>): [string, string] {
-  switch (error) {
-    case "no_permission": return ["NEED ACCESS", "Accessibility perm"];
-    case "slack_not_running": return ["NOT RUNNING", "Launch Slack"];
-    case "timeout": return ["TIMEOUT", "Retrying..."];
-  }
 }

@@ -8,32 +8,60 @@ import {
 import type { KeyAction } from "@elgato/streamdeck";
 import type { JsonValue } from "@elgato/utils";
 import { execFile } from "child_process";
-import {
-  startBadgePolling,
-  stopBadgePolling,
-  getBadgeStatus,
-  pollBadgeNow,
-} from "../utils/slackDockBadge.js";
+import streamDeck from "@elgato/streamdeck";
 import { renderSlackSvg } from "../utils/renderSlack.js";
-import { svgToDataUrl } from "../utils/svgUtils.js";
 
 interface SlackSettings {
   [key: string]: JsonValue;
 }
 
-// Jumps to the previous unread channel/DM (⌥⇧↑). Chaining ⌘⇧M first broke
-// Activity view's scroll/focus, and "previous unread" evaluated from the
-// Activity pane so we never wrapped to the oldest unread. Using ⌥⇧↑ alone
-// keeps focus in the message pane and wraps from bottom upward cleanly.
-const JUMP_PREV_UNREAD_SCRIPT = `
+const POLL_MS = 5_000;
+
+// Activate Slack and send ⌘⇧M (Activity). key code 46 = "m";
+// raw key code bypasses keyboard-layout remapping.
+const OPEN_SCRIPT = `
 tell application "Slack" to activate
-delay 0.2
 tell application "System Events"
   tell process "Slack"
-    key code 126 using {option down, shift down}
+    set frontmost to true
+    repeat 60 times
+      if frontmost then exit repeat
+      delay 0.05
+    end repeat
+  end tell
+  delay 0.15
+  key code 46 using {command down, shift down}
+end tell
+`;
+
+// Read Slack's Dock badge. "3" = mention count, "•" = silent unread,
+// empty/missing = no unread.
+const BADGE_SCRIPT = `
+tell application "System Events"
+  tell process "Dock"
+    try
+      return value of attribute "AXStatusLabel" of UI element "Slack" of list 1
+    on error
+      return ""
+    end try
   end tell
 end tell
 `;
+
+type Badge = { count: number; silent: boolean };
+
+function readBadge(): Promise<Badge> {
+  return new Promise((resolve) => {
+    execFile("osascript", ["-e", BADGE_SCRIPT], { timeout: 3_000 }, (err, stdout) => {
+      if (err) return resolve({ count: 0, silent: false });
+      const raw = String(stdout).trim();
+      if (!raw) return resolve({ count: 0, silent: false });
+      const n = parseInt(raw, 10);
+      if (Number.isFinite(n) && n > 0) return resolve({ count: n, silent: false });
+      resolve({ count: 0, silent: true });
+    });
+  });
+}
 
 @action({ UUID: "com.sh.aitoken.slack" })
 export class SlackAction extends SingletonAction<SlackSettings> {
@@ -43,9 +71,8 @@ export class SlackAction extends SingletonAction<SlackSettings> {
   override onWillAppear(ev: WillAppearEvent<SlackSettings>): void {
     if (!ev.action.isKey()) return;
     this.act = ev.action;
-    startBadgePolling();
-    this.updateDisplay();
-    this.intervalId = setInterval(() => this.updateDisplay(), 2_000);
+    this.refresh();
+    this.intervalId = setInterval(() => this.refresh(), POLL_MS);
   }
 
   override onWillDisappear(_ev: WillDisappearEvent<SlackSettings>): void {
@@ -54,28 +81,25 @@ export class SlackAction extends SingletonAction<SlackSettings> {
       clearInterval(this.intervalId);
       this.intervalId = null;
     }
-    stopBadgePolling();
   }
 
   override onKeyDown(_ev: KeyDownEvent<SlackSettings>): void {
-    execFile("osascript", ["-e", JUMP_PREV_UNREAD_SCRIPT], () => {});
-    for (let i = 1; i <= 4; i++) {
-      setTimeout(() => {
-        pollBadgeNow();
-        this.updateDisplay();
-      }, i * 500);
-    }
+    execFile("osascript", ["-e", OPEN_SCRIPT], (err, _stdout, stderr) => {
+      if (err) {
+        streamDeck.logger.warn(`[slack] open err=${err.message} stderr=${String(stderr).trim()}`);
+      }
+    });
+    // Re-poll a bit later — activity open usually clears unreads.
+    setTimeout(() => this.refresh(), 1_500);
   }
 
-  private updateDisplay(): void {
+  private async refresh(): Promise<void> {
     if (!this.act) return;
-    const status = getBadgeStatus();
-    const svg = renderSlackSvg({
-      count: status.count,
-      silent: status.silent,
-      error: status.error,
-    });
-    this.act.setImage(svgToDataUrl(svg)).catch(() => {});
+    const badge = await readBadge();
+    if (!this.act) return;
+    const svg = renderSlackSvg(badge);
+    const url = `data:image/svg+xml;base64,${Buffer.from(svg).toString("base64")}`;
+    this.act.setImage(url).catch(() => {});
     this.act.setTitle("").catch(() => {});
   }
 }
