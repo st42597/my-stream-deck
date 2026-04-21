@@ -21,16 +21,15 @@ interface SlackSettings {
   [key: string]: JsonValue;
 }
 
-// Opens Slack's Activity view (⌘⇧M → 이동 > 내 활동) then jumps to the next
-// unread channel/DM (⌥⇧↓). Uses raw key codes because Electron apps handle
-// them more reliably than AppleScript `keystroke`.
-const OPEN_LATEST_ACTIVITY_SCRIPT = `
+// Jumps to the previous unread channel/DM (⌥⇧↑). Chaining ⌘⇧M first broke
+// Activity view's scroll/focus, and "previous unread" evaluated from the
+// Activity pane so we never wrapped to the oldest unread. Using ⌥⇧↑ alone
+// keeps focus in the message pane and wraps from bottom upward cleanly.
+const JUMP_PREV_UNREAD_SCRIPT = `
 tell application "Slack" to activate
-delay 0.3
+delay 0.2
 tell application "System Events"
   tell process "Slack"
-    key code 46 using {command down, shift down}
-    delay 0.15
     key code 126 using {option down, shift down}
   end tell
 end tell
@@ -59,7 +58,7 @@ export class SlackAction extends SingletonAction<SlackSettings> {
   }
 
   override onKeyDown(_ev: KeyDownEvent<SlackSettings>): void {
-    execFile("osascript", ["-e", OPEN_LATEST_ACTIVITY_SCRIPT], () => {});
+    execFile("osascript", ["-e", JUMP_PREV_UNREAD_SCRIPT], () => {});
     for (let i = 1; i <= 4; i++) {
       setTimeout(() => {
         pollBadgeNow();
