@@ -99,6 +99,19 @@
         }
       ],
       "PropertyInspectorPath": "inspector/claudesession.html"
+    },
+    {
+      "Name": "Poker Cards",
+      "UUID": "com.sh.aitoken.poker",
+      "Icon": "imgs/actions/poker/icon",
+      "Tooltip": "Press to draw two random poker cards",
+      "SupportedInMultiActions": false,
+      "States": [
+        {
+          "Image": "imgs/actions/poker/icon"
+        }
+      ],
+      "PropertyInspectorPath": "inspector/poker.html"
     }
   ]
 }

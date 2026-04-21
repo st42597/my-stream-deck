@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #0f0f0f;
+      color: #ccc;
+      font-family: 'SF Mono', Menlo, monospace;
+      font-size: 12px;
+      padding: 12px;
+    }
+    .title {
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: #c8a96e;
+      margin-bottom: 12px;
+    }
+    .note {
+      background: #1a1a1a;
+      border: 1px solid #2a2a1a;
+      border-radius: 4px;
+      padding: 8px 10px;
+      color: #888;
+      font-size: 11px;
+      line-height: 1.7;
+    }
+  </style>
+</head>
+<body>
+  <div class="title">POKER CARDS</div>
+  <div class="note">
+    Press the button to draw two random cards from a 52-card deck.<br>
+    Each press shuffles and draws fresh.
+  </div>
+  <script>
+    var websocket, uuid;
+    function connectElgatoStreamDeckSocket(inPort, inUUID, inRegisterEvent) {
+      uuid = inUUID;
+      websocket = new WebSocket("ws://127.0.0.1:" + inPort);
+      websocket.onopen = function() {
+        websocket.send(JSON.stringify({ event: inRegisterEvent, uuid: inUUID }));
+      };
+    }
+  </script>
+</body>
+</html>
