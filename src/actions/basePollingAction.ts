@@ -1,11 +1,13 @@
 import streamDeck, {
   SingletonAction,
+} from "@elgato/streamdeck";
+import type {
+  DidReceiveSettingsEvent,
+  KeyAction,
+  KeyDownEvent,
   WillAppearEvent,
   WillDisappearEvent,
-  DidReceiveSettingsEvent,
-  KeyDownEvent,
 } from "@elgato/streamdeck";
-import type { KeyAction } from "@elgato/streamdeck";
 import type { JsonValue } from "@elgato/utils";
 
 export interface PollingSettings {
@@ -54,6 +56,7 @@ export abstract class BasePollingAction<S extends PollingSettings> extends Singl
   }
 
   private startInterval(): void {
+    this.stopInterval();
     if (this.refreshSec <= 0) return;
     this.intervalId = setInterval(() => {
       this.updateDisplay().catch((err) =>

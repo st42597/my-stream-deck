@@ -6,7 +6,8 @@
   "scripts": {
     "build": "rollup -c rollup.config.mjs",
     "watch": "rollup -c rollup.config.mjs --watch",
-    "test": "node --experimental-strip-types --no-warnings scripts/test-claude-session.mjs"
+    "test": "node --experimental-strip-types --no-warnings scripts/test-claude-session.mjs && npm run test:polling",
+    "test:polling": "node --experimental-strip-types --no-warnings scripts/test-polling-lifecycle.mjs"
   },
   "keywords": [],
   "author": "",
